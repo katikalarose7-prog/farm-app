@@ -1,0 +1,183 @@
+/* src/pages/Dashboard.css */
+
+.loading-text {
+  text-align: center;
+  color: #718096;
+  margin-top: 40px;
+  font-size: 18px;
+}
+
+.error-box {
+  background: #fff5f5;
+  border: 1px solid #fc8181;
+  color: #c53030;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+/* ---- STATS GRID ---- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 18px 14px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  border-top: 4px solid transparent;
+}
+
+.stat-card.green  { border-color: #48bb78; }
+.stat-card.blue   { border-color: #4299e1; }
+.stat-card.yellow { border-color: #ecc94b; }
+.stat-card.red    { border-color: #fc8181; }
+.stat-card.purple { border-color: #9f7aea; }
+
+.stat-icon  { font-size: 26px; margin-bottom: 6px; }
+.stat-value { font-size: 26px; font-weight: 700; color: #2d3748; }
+.stat-label { font-size: 12px; color: #718096; margin-top: 4px; }
+
+/* ---- SECTION TITLE ---- */
+.section-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  color: #2d6a4f;
+}
+
+/* ---- ANIMAL BREAKDOWN LIST ---- */
+.animal-list { display: flex; flex-direction: column; gap: 10px; }
+
+.animal-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: #f7fafc;
+  border-radius: 8px;
+}
+
+.animal-emoji { font-size: 22px; }
+.animal-type  { flex: 1; font-weight: 600; text-transform: capitalize; }
+.animal-count { color: #2d6a4f; font-weight: 700; }
+
+.empty-text { color: #a0aec0; font-size: 14px; }
+.empty-text a { color: #2d6a4f; font-weight: 600; }
+
+/* ---- QUICK ACTION BUTTONS ---- */
+.quick-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.quick-btn {
+  display: block;
+  background: #f0fff4;
+  border: 1.5px solid #c6f6d5;
+  color: #276749;
+  padding: 14px 10px;
+  border-radius: 10px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.quick-btn:hover { background: #c6f6d5; }
+
+/* ---- RESPONSIVE ---- */
+@media (max-width: 600px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .quick-links { grid-template-columns: 1fr; }
+}
+
+
+/* ---- PROFIT CARD ---- */
+.profit-card { margin-bottom: 16px; }
+
+/* Price input row */
+.price-inputs {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.price-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f7fafc;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.price-input-group label {
+  font-size: 13px;
+  color: #4a5568;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.price-input-group input {
+  width: 70px;
+  padding: 5px 8px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #2d6a4f;
+  text-align: center;
+}
+
+/* Income / Expense / Profit boxes */
+.profit-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.profit-box {
+  border-radius: 10px;
+  padding: 14px;
+  border: 2px solid #e2e8f0;
+  text-align: center;
+}
+
+.profit-box.income  { background: #f0fff4; border-color: #c6f6d5; }
+.profit-box.expense { background: #fff5f5; border-color: #fed7d7; }
+.profit-box.result  { background: #f7fafc; }
+
+.profit-box-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 6px;
+}
+
+.profit-box-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: #2d3748;
+  margin-bottom: 4px;
+}
+
+.profit-box-sub {
+  font-size: 11px;
+  color: #718096;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .profit-grid  { grid-template-columns: 1fr; }
+  .price-inputs { flex-direction: column; gap: 8px; }
+}

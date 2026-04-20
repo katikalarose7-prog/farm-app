@@ -1,0 +1,145 @@
+/* src/pages/LivestockPage.css */
+
+/* Header row with title + Add button side by side */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.page-header .page-title { margin-bottom: 0; }
+
+/* Form card highlight */
+.form-card {
+  border: 1.5px solid #c6f6d5;
+  background: #f0fff4;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+/* Summary bar */
+.summary-bar {
+  display: flex;
+  gap: 20px;
+  background: white;
+  border-radius: 10px;
+  padding: 12px 18px;
+  margin-bottom: 14px;
+  font-size: 14px;
+  color: #4a5568;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.summary-bar strong { color: #2d6a4f; }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 50px 20px;
+  color: #a0aec0;
+}
+
+.empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { font-size: 16px; margin-bottom: 16px; }
+
+/* Animal cards grid */
+.animal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.animal-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  border: 1px solid #e2e8f0;
+  transition: transform 0.15s;
+}
+
+.animal-card:hover { transform: translateY(-2px); }
+
+/* Card top row: emoji + name + count */
+.animal-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.animal-big-emoji { font-size: 32px; }
+
+.animal-card-info { flex: 1; }
+
+.animal-card-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 4px;
+}
+
+/* Big count number on the right */
+.animal-card-count {
+  font-size: 28px;
+  font-weight: 800;
+  color: #2d6a4f;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* Breed / notes chips */
+.animal-card-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.detail-chip {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 12px;
+  color: #4a5568;
+}
+
+/* Edit / Delete buttons */
+.animal-card-footer {
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 12px;
+}
+
+.animal-card-footer .btn {
+  flex: 1;
+  padding: 8px;
+  font-size: 13px;
+}
+
+.error-box {
+  background: #fff5f5;
+  border: 1px solid #fc8181;
+  color: #c53030;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.loading-text {
+  text-align: center;
+  color: #718096;
+  padding: 40px;
+}
+
+@media (max-width: 600px) {
+  .animal-grid { grid-template-columns: 1fr; }
+}
