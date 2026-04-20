@@ -5,6 +5,9 @@
 import { NavLink } from 'react-router-dom';
 import './Navbar.css';
 
+import { useTranslation } from '../i18n';
+
+
 const links = [
   { to: '/',           label: '🏠 Home'       },
   { to: '/livestock',  label: '🐐 Livestock'  },
@@ -14,27 +17,42 @@ const links = [
 ];
 
 function Navbar() {
+    const { lang, setLang } = useTranslation();
+
   return (
     <>
-      {/* Top bar (desktop) */}
       <nav className="navbar">
-        <span className="navbar-brand">🌾 Tully's Farm</span>
+        <span className="navbar-brand">🌾 Farm Manager</span>
+
+        {/* ---- LANGUAGE SWITCHER ---- */}
+        <div className="lang-switcher">
+          <button
+            className={`lang-btn ${lang === 'en' ? 'active' : ''}`}
+            onClick={() => setLang('en')}
+          >EN</button>
+          <button
+            className={`lang-btn ${lang === 'hi' ? 'active' : ''}`}
+            onClick={() => setLang('hi')}
+          >हि</button>
+          <button
+            className={`lang-btn ${lang === 'te' ? 'active' : ''}`}
+            onClick={() => setLang('te')}
+          >తె</button>
+        </div>
+
         <div className="navbar-links">
           {links.map(link => (
             <NavLink
               key={link.to}
               to={link.to}
               end={link.to === '/'}
-              className={({ isActive }) =>
-                isActive ? 'nav-link active' : 'nav-link'
-              }
+              className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
             >
               {link.label}
             </NavLink>
           ))}
         </div>
       </nav>
-
       {/* Bottom tab bar (mobile) */}
       <nav className="bottom-nav">
         {links.map(link => (
