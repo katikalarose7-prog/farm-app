@@ -22,7 +22,7 @@ function Navbar() {
   return (
     <>
       <nav className="navbar">
-        <span className="navbar-brand">🌾 Tully's</span>
+        <span className="navbar-brand">🌾 Tully's Farm</span>
 
         {/* ---- LANGUAGE SWITCHER ---- */}
         <div className="lang-switcher">
