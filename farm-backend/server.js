@@ -10,7 +10,7 @@ const app  = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors(({
-  origin:["https://tullys-farm.netlify.app" , "http://localhost:5173/"],
+  origin:["https://tullys-farm.netlify.app"],
   credentials: true
 })));
 app.use(express.json());
@@ -32,4 +32,4 @@ app.use('/api/profit',     protect, require('./routes/profit'));
 
 app.get('/', (req, res) => res.json({ message: '🌾 Farm API running!' }));
 
-app.listen(PORT, () => console.log(`🚀 Server on http://localhost:${PORT}`));
+app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Server on http://localhost:${PORT}`));
