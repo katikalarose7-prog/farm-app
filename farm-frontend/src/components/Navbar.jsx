@@ -1,12 +1,7 @@
 // src/components/Navbar.jsx
-// The navigation bar shown at the top on every page.
-// On mobile it becomes a bottom tab bar for easy thumb access.
-
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
-
-import { useTranslation } from '../i18n';
-
 
 const links = [
   { to: '/',           label: '🏠 Home'       },
@@ -17,28 +12,18 @@ const links = [
 ];
 
 function Navbar() {
-    const { lang, setLang } = useTranslation();
+  const { user, logout } = useAuth();
+  const navigate         = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate('/login');
+  }
 
   return (
     <>
       <nav className="navbar">
         <span className="navbar-brand">🌾 Tully's Farm</span>
-
-        {/* ---- LANGUAGE SWITCHER ---- */}
-        <div className="lang-switcher">
-          <button
-            className={`lang-btn ${lang === 'en' ? 'active' : ''}`}
-            onClick={() => setLang('en')}
-          >EN</button>
-          <button
-            className={`lang-btn ${lang === 'hi' ? 'active' : ''}`}
-            onClick={() => setLang('hi')}
-          >हि</button>
-          <button
-            className={`lang-btn ${lang === 'te' ? 'active' : ''}`}
-            onClick={() => setLang('te')}
-          >తె</button>
-        </div>
 
         <div className="navbar-links">
           {links.map(link => (
@@ -52,7 +37,16 @@ function Navbar() {
             </NavLink>
           ))}
         </div>
+
+        {/* User info + logout */}
+        <div className="navbar-user">
+          <span className="navbar-username">👤 {user?.name}</span>
+          <button className="logout-btn" onClick={handleLogout}>
+            🚪 Logout
+          </button>
+        </div>
       </nav>
+
       {/* Bottom tab bar (mobile) */}
       <nav className="bottom-nav">
         {links.map(link => (
@@ -60,16 +54,17 @@ function Navbar() {
             key={link.to}
             to={link.to}
             end={link.to === '/'}
-            className={({ isActive }) =>
-              isActive ? 'bottom-link active' : 'bottom-link'
-            }
+            className={({ isActive }) => isActive ? 'bottom-link active' : 'bottom-link'}
           >
             {link.label}
           </NavLink>
         ))}
+        {/* Logout tab on mobile */}
+        <button className="bottom-link bottom-logout" onClick={handleLogout}>
+          🚪 Logout
+        </button>
       </nav>
     </>
-    
   );
 }
 

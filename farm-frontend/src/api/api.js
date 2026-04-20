@@ -10,11 +10,21 @@ const api = axios.create({
 });
 
 // 🔐 AUTO ATTACH JWT TOKEN
-api.interceptors.request.use((config) => {
+/*api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});*/
+
+api.interceptors.request.use((config) => {
+  const user = JSON.parse(localStorage.getItem("farmUser"));
+
+  if (user?.token) {
+    config.headers.Authorization = `Bearer ${user.token}`;
   }
 
   return config;

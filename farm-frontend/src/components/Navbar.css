@@ -109,3 +109,43 @@
   background: rgba(255,255,255,0.3);
   color: white;
 }
+
+/* User info + logout in navbar */
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 12px;
+}
+
+.navbar-username {
+  font-size: 13px;
+  color: rgba(255,255,255,0.85);
+  white-space: nowrap;
+}
+
+.logout-btn {
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 5px 12px;
+  border-radius: 7px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.logout-btn:hover { background: rgba(255,80,80,0.4); }
+
+/* Mobile logout tab */
+.bottom-logout {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+@media (max-width: 650px) {
+  .navbar-user { display: none; } /* Hidden on mobile — use bottom tab instead */
+}

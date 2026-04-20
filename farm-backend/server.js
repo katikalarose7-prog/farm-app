@@ -1,34 +1,32 @@
 // farm-backend/server.js
-const express = require('express');
+const express  = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
+const cors     = require('cors');
 require('dotenv').config();
 
-const app = express();
-const PORT = process.env.PORT || 5000;
-// ---- MIDDLEWARE ----
-app.use(cors());
+const { protect } = require('./middleware/auth');
 
+const app  = express();
+const PORT = process.env.PORT || 5000;
+
+app.use(cors());
 app.use(express.json());
-// ---- DATABASE ----
+
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected'))
-  .catch((err) => console.log('❌ DB Error:', err));
+  .catch(err => console.log('❌ DB Error:', err.message));
 
-// ---- ROUTES ----
-// All routes are prefixed with /api/
-app.use('/api/livestock', require('./routes/livestock'));
-app.use('/api/production', require('./routes/production'));
-app.use('/api/workers', require('./routes/workers'));
-app.use('/api/expenses', require('./routes/expenses'));
-app.use('/api/profit', require('./routes/profit'));
+// ---- PUBLIC ROUTES (no login needed) ----
+app.use('/api/auth', require('./routes/auth'));
 
-// ---- ROOT ----
-app.get('/', (req, res) => {
-  res.json({ message: '🌾 Farm API running!' });
-});
+// ---- PROTECTED ROUTES (must be logged in) ----
+// Adding 'protect' here means ALL routes below require a valid token
+app.use('/api/livestock',  protect, require('./routes/livestock'));
+app.use('/api/production', protect, require('./routes/production'));
+app.use('/api/workers',    protect, require('./routes/workers'));
+app.use('/api/expenses',   protect, require('./routes/expenses'));
+app.use('/api/profit',     protect, require('./routes/profit'));
 
-// ---- START ----
-app.listen(PORT, () => {
-  console.log(`🚀 Server on http://localhost:${PORT}`);
-});
+app.get('/', (req, res) => res.json({ message: '🌾 Farm API running!' }));
+
+app.listen(PORT, () => console.log(`🚀 Server on http://localhost:${PORT}`));
