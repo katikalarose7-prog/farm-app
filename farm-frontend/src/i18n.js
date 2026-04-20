@@ -1,6 +1,7 @@
 // src/i18n.js
 // Simple translation system — add more keys as needed
 
+
 export const translations = {
   en: {
     // Navbar
@@ -9,6 +10,7 @@ export const translations = {
     production:   'Production',
     workers:      'Workers',
     expenses:     'Expenses',
+    dashboard: "Dashboard",
 
     // Dashboard
     totalAnimals: 'Total Animals',
@@ -50,6 +52,7 @@ export const translations = {
   },
 
   hi: {
+     dashboard: "डैशबोर्ड",
     home:         'होम',
     livestock:    'पशुधन',
     production:   'उत्पादन',
@@ -86,6 +89,7 @@ export const translations = {
   },
 
   te: {
+    dashboard: 'డ్యాష్‌బోర్డ్',
     home:         'హోమ్',
     livestock:    'పశువులు',
     production:   'ఉత్పత్తి',

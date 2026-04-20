@@ -1,44 +1,87 @@
-// src/api/api.js
-// All backend API calls live here. 
-// If your backend URL ever changes, you only update it in ONE place.
+import axios from "axios";
 
-import axios from 'axios';
+// Base URL (local or production)
+const BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-//const BASE_URL = 'http://localhost:5000/api';
+// Create axios instance
+const api = axios.create({
+  baseURL: BASE_URL
+});
 
+// 🔐 AUTO ATTACH JWT TOKEN
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
 
-// To this (use your actual Render URL):
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
 
-// ---- LIVESTOCK ----
-export const getLivestock     = ()         => axios.get(`${BASE_URL}/livestock`);
-export const getLivestockSummary = ()      => axios.get(`${BASE_URL}/livestock/summary`);
-export const addLivestock     = (data)     => axios.post(`${BASE_URL}/livestock`, data);
-export const updateLivestock  = (id, data) => axios.put(`${BASE_URL}/livestock/${id}`, data);
-export const deleteLivestock  = (id)       => axios.delete(`${BASE_URL}/livestock/${id}`);
+  return config;
+});
 
-// ---- PRODUCTION ----
-export const getProduction      = ()     => axios.get(`${BASE_URL}/production`);
-export const getTodayProduction = ()     => axios.get(`${BASE_URL}/production/today`);
-export const addProduction      = (data) => axios.post(`${BASE_URL}/production`, data);
-export const deleteProduction   = (id)   => axios.delete(`${BASE_URL}/production/${id}`);
+export default api;
 
-// ---- WORKERS ----
-export const getWorkers      = ()             => axios.get(`${BASE_URL}/workers`);
-export const addWorker       = (data)         => axios.post(`${BASE_URL}/workers`, data);
-export const updateWorker    = (id, data)     => axios.put(`${BASE_URL}/workers/${id}`, data);
-export const deleteWorker    = (id)           => axios.delete(`${BASE_URL}/workers/${id}`);
-export const markAttendance  = (id, data)     => axios.post(`${BASE_URL}/workers/${id}/attendance`, data);
+export const getLivestock = () => api.get("/livestock");
 
-// ---- EXPENSES ----
-export const getExpenses     = ()     => axios.get(`${BASE_URL}/expenses`);
-export const getMonthlyTotal = ()     => axios.get(`${BASE_URL}/expenses/monthly-total`);
-export const addExpense      = (data) => axios.post(`${BASE_URL}/expenses`, data);
-export const deleteExpense   = (id)   => axios.delete(`${BASE_URL}/expenses/${id}`);
+export const getLivestockSummary = () =>
+  api.get("/livestock/summary");
 
-// ---- PROFIT & CHARTS ----
-export const getMonthlyProfit = (milkPrice, eggPrice) =>
-  axios.get(`${BASE_URL}/profit?milkPrice=${milkPrice}&eggPrice=${eggPrice}`);
+export const addLivestock = (data) =>
+  api.post("/livestock", data);
+
+export const updateLivestock = (id, data) =>
+  api.put(`/livestock/${id}`, data);
+
+export const deleteLivestock = (id) =>
+  api.delete(`/livestock/${id}`);
+
+export const getProduction = () =>
+  api.get("/production");
+
+export const getTodayProduction = () =>
+  api.get("/production/today");
+
+export const addProduction = (data) =>
+  api.post("/production", data);
+
+export const deleteProduction = (id) =>
+  api.delete(`/production/${id}`);
 
 export const getLast7Days = () =>
-  axios.get(`${BASE_URL}/production/last7days`);
+  api.get("/production/last7days");
+
+
+export const getWorkers = () =>
+  api.get("/workers");
+
+export const addWorker = (data) =>
+  api.post("/workers", data);
+
+export const updateWorker = (id, data) =>
+  api.put(`/workers/${id}`, data);
+
+export const deleteWorker = (id) =>
+  api.delete(`/workers/${id}`);
+
+export const markAttendance = (id, data) =>
+  api.post(`/workers/${id}/attendance`, data);
+
+
+export const getExpenses = () =>
+  api.get("/expenses");
+
+export const getMonthlyTotal = () =>
+  api.get("/expenses/monthly-total");
+
+export const addExpense = (data) =>
+  api.post("/expenses", data);
+
+export const deleteExpense = (id) =>
+  api.delete(`/expenses/${id}`);
+
+
+export const getMonthlyProfit = (milkPrice, eggPrice) =>
+  api.get(
+    `/profit?milkPrice=${milkPrice}&eggPrice=${eggPrice}`
+  );

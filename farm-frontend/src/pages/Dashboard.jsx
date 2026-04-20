@@ -1,6 +1,8 @@
 // src/pages/Dashboard.jsx
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from '../i18n';
+
 import {
   getLivestockSummary,
   getTodayProduction,
@@ -15,6 +17,7 @@ import {
 import './Dashboard.css';
 
 function Dashboard() {
+  const { t, lang, setLang} = useTranslation();
   const [livestock,     setLivestock]     = useState([]);
   const [today,         setToday]         = useState({ milkLiters: 0, eggsCount: 0 });
   const [workerCount,   setWorkerCount]   = useState(0);
@@ -64,7 +67,7 @@ function Dashboard() {
 
   return (
     <div className="page">
-      <h1 className="page-title">🏠 Dashboard</h1>
+      <h1 className="page-title">🏠 {t("dashboard")}</h1>
 
       {error && <div className="error-box">{error}</div>}
 

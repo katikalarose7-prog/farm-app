@@ -10,7 +10,6 @@ import LivestockPage  from './pages/LivestockPage';
 import ProductionPage from './pages/ProductionPage';
 import WorkersPage    from './pages/WorkersPage';
 import ExpensesPage   from './pages/ExpensesPage';
-
 // Navbar shown on every page
 import Navbar from './components/Navbar';
 
@@ -24,7 +23,6 @@ function App() {
         <Route path="/production" element={<ProductionPage />} />
         <Route path="/workers"    element={<WorkersPage />} />
         <Route path="/expenses"   element={<ExpensesPage />} />
-
       </Routes>
     </BrowserRouter>
   );
