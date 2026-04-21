@@ -1,6 +1,7 @@
 // src/pages/Dashboard.jsx
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+
 import {
   getLivestockSummary,
   getTodayProduction,
@@ -25,6 +26,9 @@ function Dashboard() {
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState('');
 
+  //weather
+  const [weather, setWeather] = useState(null);
+const [locationName, setLocationName] = useState('');
   // Price state
   const [milkPrice,     setMilkPrice]     = useState(40);
   const [eggPrice,      setEggPrice]      = useState(6);
@@ -33,9 +37,68 @@ function Dashboard() {
   const [saving,        setSaving]        = useState(false);
   const [saveMsg,       setSaveMsg]       = useState('');
 
+//weather location
+const fetchWeather = useCallback(() => {
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+
+      try {
+        // 🌦️ Weather API
+        const weatherRes = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`
+        );
+        const weatherData = await weatherRes.json();
+        setWeather(weatherData.current_weather);
+
+        // 📍 Reverse Geocoding (get city name)
+        const geoRes = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
+        );
+        const geoData = await geoRes.json();
+
+      const addr = geoData.address;
+
+// 👇 get best possible area name
+const area =
+  addr.suburb ||
+  addr.neighbourhood ||
+  addr.village ||
+  addr.town ||
+  addr.city_district;
+
+// 👇 get city
+const city =
+  addr.city ||
+  addr.town ||
+  addr.village ||
+  addr.county;
+
+// 👇 combine nicely
+const fullLocation = area
+  ? `${area}, ${city}`
+  : city;
+
+setLocationName(fullLocation);
+
+      } catch (err) {
+        console.error("Weather/Location error:", err);
+      }
+    },
+    (err) => {
+      console.log("Location permission denied");
+    }
+  );
+}, []);
+  
+  
+  
+  
   // Load settings + dashboard data on mount
   useEffect(() => {
     loadSettingsThenDashboard();
+  fetchWeather(); // 👈 ADD THIS LINE
   }, []);
 
   async function loadSettingsThenDashboard() {
@@ -117,9 +180,34 @@ function Dashboard() {
     </div>
   );
 
+  
+
   return (
     <div className="page">
       <h1 className="page-title">🏠 Dashboard</h1>
+
+{/* ---- weather start ---- */}
+{weather && (
+  <div className="card weather-card">
+    <h2 className="section-title">🌦️ Weather Today</h2>
+
+    {/* 📍 LOCATION */}
+    <div className="location-text">
+      📍 {locationName || 'Fetching location...'}
+    </div>
+
+    <div className="weather-content">
+      <div className="weather-item">
+        🌡️ Temperature: <strong>{weather.temperature}°C</strong>
+      </div>
+
+      <div className="weather-item">
+        💨 Wind Speed: <strong>{weather.windspeed} km/h</strong>
+      </div>
+    </div>
+  </div>
+)}
+{/* ---- weather stop ---- */}
 
       {error && <div className="error-box">{error}</div>}
 
