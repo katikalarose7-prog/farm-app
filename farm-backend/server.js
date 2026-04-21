@@ -29,6 +29,7 @@ app.use('/api/profit',     protect, require('./routes/profit'));
 app.use('/api/settings',   protect, require('./routes/settings'));
 app.use('/api/categories', protect, require('./routes/categories'));
 
+
 app.get('/', (req, res) => res.json({ message: '🌾 Farm API running!' }));
 
 app.listen(PORT, () => console.log(`🚀 Server on http://localhost:${PORT}`));

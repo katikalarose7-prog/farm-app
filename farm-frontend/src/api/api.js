@@ -34,6 +34,19 @@ export default api;
 
 export const getLivestock = () => api.get("/livestock");
 
+// Add at the bottom of api.js
+
+// ---- SETTINGS ----
+export const getSettings    = ()     => axios.get(`${BASE_URL}/settings`);
+export const updateSettings = (data) => axios.put(`${BASE_URL}/settings`, data);
+
+// Add at the bottom of api.js
+
+// ---- PRODUCTION CATEGORIES ----
+export const getCategories    = ()     => axios.get(`${BASE_URL}/categories`);
+export const addCategory      = (data) => axios.post(`${BASE_URL}/categories`, data);
+export const deleteCategory   = (id)   => axios.delete(`${BASE_URL}/categories/${id}`);
+
 export const getLivestockSummary = () =>
   api.get("/livestock/summary");
 

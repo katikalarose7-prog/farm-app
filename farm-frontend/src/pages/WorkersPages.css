@@ -24,7 +24,7 @@
   font-size: 14px;
 }
 
-/* ---- SUMMARY BAR ---- */
+/* ---- SUMMARY CARDS ---- */
 .workers-summary {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -42,41 +42,62 @@
   box-shadow: 0 1px 4px rgba(0,0,0,0.07);
 }
 
-.wsummary-icon  { font-size: 24px; }
+.wsummary-icon  { font-size: 22px; }
 .wsummary-value { font-size: 18px; font-weight: 700; color: #2d3748; }
 .wsummary-label { font-size: 11px; color: #718096; }
 
-/* ---- WORKER CARDS ---- */
-.workers-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 14px;
+/* ---- TABLE CARD ---- */
+.workers-table-card { overflow: hidden; padding: 0; }
+
+.table-wrap { overflow-x: auto; }
+
+.workers-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
 }
 
-.worker-card {
-  background: white;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  border: 1px solid #e2e8f0;
+.workers-table th {
+  background: #f7fafc;
+  padding: 11px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4a5568;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
 }
 
-/* Top row: avatar + info + salary */
-.worker-top {
+.workers-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+}
+
+/* Clicking a row expands it — show pointer cursor */
+.worker-row {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.worker-row:hover td { background: #f7fff9; }
+.worker-row.row-expanded td {
+  background: #f7fff9;
+  border-bottom: none;
+}
+
+/* ---- NAME CELL ---- */
+.name-cell {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 14px;
+  align-items: center;
+  gap: 10px;
 }
 
-/* Coloured circle with first letter of name */
-.worker-avatar {
-  width: 46px;
-  height: 46px;
+.w-avatar {
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: #2d6a4f;
   color: white;
-  font-size: 20px;
+  font-size: 15px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -84,101 +105,196 @@
   flex-shrink: 0;
 }
 
-.worker-info    { flex: 1; }
-.worker-name    { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
-.worker-role    { display: block; font-size: 12px; color: #718096; margin-bottom: 3px; }
-.worker-phone   { display: block; font-size: 12px; color: #4a5568; }
+.w-name   { font-size: 14px; font-weight: 700; color: #2d3748; }
+.w-sub    { font-size: 12px; color: #718096; margin-top: 2px; }
+.w-salary { font-size: 15px; font-weight: 700; color: #2d6a4f; }
+.w-days   { font-size: 13px; font-weight: 600; color: #2d3748; }
 
-.worker-salary      { text-align: right; }
-.salary-amount      { font-size: 17px; font-weight: 800; color: #2d6a4f; }
-.salary-label       { font-size: 11px; color: #718096; }
-
-/* Attendance stats row */
-.worker-stats {
-  display: flex;
-  background: #f7fafc;
-  border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 14px;
-  gap: 4px;
+/* Progress bar under days */
+.progress-bg {
+  height: 4px;
+  background: #edf2f7;
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 5px 0 3px;
+  width: 100px;
 }
 
-.wstat {
-  flex: 1;
+.progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+  min-width: 3px;
+}
+
+/* ---- ATTENDANCE PILL (in table row) ---- */
+.att-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+  border: none;
+}
+
+.att-pill:hover { opacity: 0.8; }
+
+.att-pill.present  { background: #c6f6d5; color: #22543d; }
+.att-pill.absent   { background: #fed7d7; color: #742a2a; }
+.att-pill.unmarked { background: #edf2f7; color: #718096; }
+
+.att-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.att-dot.green { background: #22543d; }
+.att-dot.red   { background: #742a2a; }
+.att-dot.gray  { background: #a0aec0; }
+
+/* ---- EXPAND BUTTON ---- */
+.expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #a0aec0;
+  font-size: 18px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: transform 0.2s, color 0.15s;
+  line-height: 1;
+}
+.expand-btn:hover { color: #2d6a4f; }
+.expand-btn.open  { transform: rotate(180deg); color: #2d6a4f; }
+
+/* ---- EXPANDED PANEL ---- */
+.expanded-row td { background: #f7fff9; }
+
+.expanded-panel {
+  border-top: 2px dashed #c6f6d5;
+}
+
+/* Stats inside expanded panel */
+.exp-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.exp-stat {
+  background: #f7fff9;
+  padding: 14px;
   text-align: center;
-  border-right: 1px solid #e2e8f0;
-  padding: 0 6px;
 }
-.wstat:last-child { border-right: none; }
 
-.wstat-value { display: block; font-size: 15px; font-weight: 700; color: #2d3748; }
-.wstat-label { display: block; font-size: 10px; color: #718096; margin-top: 2px; }
+.exp-stat-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: #2d3748;
+  margin-bottom: 3px;
+}
 
-/* Attendance buttons */
-.attendance-row {
+.exp-stat-label {
+  font-size: 11px;
+  color: #718096;
+}
+
+/* Actions row inside expanded panel */
+.exp-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 12px;
+  padding: 14px 16px;
   flex-wrap: wrap;
+  background: white;
 }
 
-.attendance-label {
+.exp-action-label {
   font-size: 13px;
-  color: #4a5568;
   font-weight: 600;
+  color: #4a5568;
   white-space: nowrap;
 }
 
-.attendance-buttons { display: flex; gap: 6px; }
-
-.att-btn {
-  padding: 7px 14px;
+/* Present / Absent toggle group */
+.att-toggle-group {
+  display: flex;
+  border: 1.5px solid #e2e8f0;
   border-radius: 8px;
-  border: 2px solid transparent;
+  overflow: hidden;
+}
+
+.att-opt {
+  padding: 8px 18px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  background: #f7fafc;
+  border: none;
+  background: white;
   color: #4a5568;
   transition: all 0.15s;
 }
 
-.att-btn.present.active {
+.att-opt:hover { background: #f7fafc; }
+
+/* Divider between Present and Absent */
+.att-opt:first-child {
+  border-right: 1.5px solid #e2e8f0;
+}
+
+.att-opt.att-present-active {
   background: #c6f6d5;
-  border-color: #48bb78;
   color: #22543d;
 }
 
-.att-btn.absent.active {
+.att-opt.att-absent-active {
   background: #fed7d7;
-  border-color: #fc8181;
   color: #742a2a;
 }
 
-.att-btn:hover { opacity: 0.8; }
-
-/* Footer */
-.worker-footer {
-  border-top: 1px solid #f0f0f0;
-  padding-top: 12px;
+/* Remove worker button */
+.remove-btn {
+  margin-left: auto;
+  background: none;
+  border: 1px solid #e2e8f0;
+  color: #718096;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
 }
 
-.worker-footer .btn { width: 100%; font-size: 13px; }
+.remove-btn:hover {
+  border-color: #fc8181;
+  color: #e53e3e;
+  background: #fff5f5;
+}
 
-/* Empty / loading */
+/* ---- EMPTY + LOADING ---- */
 .empty-state {
   text-align: center;
   padding: 50px 20px;
   color: #a0aec0;
 }
-.empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-icon  { font-size: 48px; margin-bottom: 12px; }
 .empty-state p { font-size: 16px; margin-bottom: 16px; }
-.loading-text { text-align: center; color: #718096; padding: 40px; }
+.loading-text  { text-align: center; color: #718096; padding: 40px; }
 
-/* Responsive */
-@media (max-width: 600px) {
-  .workers-summary  { grid-template-columns: repeat(2, 1fr); }
-  .workers-grid     { grid-template-columns: 1fr; }
-  .attendance-row   { flex-direction: column; align-items: flex-start; }
+/* ---- RESPONSIVE ---- */
+@media (max-width: 650px) {
+  .workers-summary   { grid-template-columns: repeat(2, 1fr); }
+  .exp-stats         { grid-template-columns: repeat(2, 1fr); }
+  .workers-table th:nth-child(2),
+  .workers-table td:nth-child(2) { display: none; } /* Hide salary col on mobile */
+  .exp-actions       { flex-direction: column; align-items: flex-start; }
+  .remove-btn        { margin-left: 0; }
 }

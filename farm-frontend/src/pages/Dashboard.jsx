@@ -1,14 +1,14 @@
 // src/pages/Dashboard.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from '../i18n';
-
 import {
   getLivestockSummary,
   getTodayProduction,
   getWorkers,
   getMonthlyProfit,
   getLast7Days,
+  getSettings,       // ← new
+  updateSettings,    // ← new
 } from '../api/api';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
@@ -17,7 +17,6 @@ import {
 import './Dashboard.css';
 
 function Dashboard() {
-  const { t, lang, setLang} = useTranslation();
   const [livestock,     setLivestock]     = useState([]);
   const [today,         setToday]         = useState({ milkLiters: 0, eggsCount: 0 });
   const [workerCount,   setWorkerCount]   = useState(0);
@@ -26,27 +25,34 @@ function Dashboard() {
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState('');
 
-  // Price settings — farmer can adjust these
-  const [milkPrice, setMilkPrice] = useState(40);
-  const [eggPrice,  setEggPrice]  = useState(6);
+  // Price state
+  const [milkPrice,     setMilkPrice]     = useState(40);
+  const [eggPrice,      setEggPrice]      = useState(6);
 
-  useEffect(() => { loadDashboard(); }, [milkPrice, eggPrice]);
+  // Saving state — shows feedback when saving
+  const [saving,        setSaving]        = useState(false);
+  const [saveMsg,       setSaveMsg]       = useState('');
 
-  async function loadDashboard() {
+  // Load settings + dashboard data on mount
+  useEffect(() => {
+    loadSettingsThenDashboard();
+  }, []);
+
+  async function loadSettingsThenDashboard() {
     try {
       setLoading(true);
-      const [liveRes, prodRes, workRes, profitRes, chartRes] = await Promise.all([
-        getLivestockSummary(),
-        getTodayProduction(),
-        getWorkers(),
-        getMonthlyProfit(milkPrice, eggPrice),
-        getLast7Days(),
-      ]);
-      setLivestock(liveRes.data);
-      setToday(prodRes.data);
-      setWorkerCount(workRes.data.length);
-      setProfit(profitRes.data);
-      setChartData(chartRes.data);
+
+      // Load saved prices first
+      const settingsRes = await getSettings();
+      const savedMilk   = settingsRes.data.milkPrice;
+      const savedEgg    = settingsRes.data.eggPrice;
+
+      // Update price state with saved values
+      setMilkPrice(savedMilk);
+      setEggPrice(savedEgg);
+
+      // Now load everything else with the saved prices
+      await loadDashboard(savedMilk, savedEgg);
     } catch (err) {
       setError('Could not load data. Is the backend running?');
     } finally {
@@ -54,10 +60,56 @@ function Dashboard() {
     }
   }
 
+  // Separate function so we can call it with any prices
+  async function loadDashboard(mPrice, ePrice) {
+    try {
+      const [liveRes, prodRes, workRes, profitRes, chartRes] = await Promise.all([
+        getLivestockSummary(),
+        getTodayProduction(),
+        getWorkers(),
+        getMonthlyProfit(mPrice, ePrice),
+        getLast7Days(),
+      ]);
+      setLivestock(liveRes.data);
+      setToday(prodRes.data);
+      setWorkerCount(workRes.data.length);
+      setProfit(profitRes.data);
+      setChartData(chartRes.data);
+    } catch {
+      setError('Could not load data. Is the backend running?');
+    }
+  }
+
+  // Called when farmer clicks Save Prices button
+  async function handleSavePrices() {
+    if (milkPrice <= 0 || eggPrice <= 0) {
+      setSaveMsg('❌ Prices must be greater than 0.');
+      return;
+    }
+    try {
+      setSaving(true);
+      setSaveMsg('');
+
+      // Save to database
+      await updateSettings({ milkPrice, eggPrice });
+
+      // Recalculate profit with new prices
+      await loadDashboard(milkPrice, eggPrice);
+
+      setSaveMsg('✅ Prices saved!');
+
+      // Clear the message after 3 seconds
+      setTimeout(() => setSaveMsg(''), 3000);
+    } catch {
+      setSaveMsg('❌ Could not save prices. Try again.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   const totalAnimals = livestock.reduce((sum, item) => sum + item.totalCount, 0);
   const animalEmoji  = { goat:'🐐', buffalo:'🐃', hen:'🐔', cow:'🐄', other:'🐾' };
-
-  const profitColor = profit?.profit >= 0 ? '#2d6a4f' : '#e53e3e';
+  const profitColor  = profit?.profit >= 0 ? '#2d6a4f' : '#e53e3e';
 
   if (loading) return (
     <div className="page">
@@ -67,7 +119,7 @@ function Dashboard() {
 
   return (
     <div className="page">
-      <h1 className="page-title">🏠 {t("dashboard")}</h1>
+      <h1 className="page-title">🏠 Dashboard</h1>
 
       {error && <div className="error-box">{error}</div>}
 
@@ -107,7 +159,7 @@ function Dashboard() {
         <div className="card profit-card">
           <h2 className="section-title">📈 This Month's Profit & Loss</h2>
 
-          {/* Price inputs — farmer sets their sale prices */}
+          {/* ---- PRICE INPUTS with Save button ---- */}
           <div className="price-inputs">
             <div className="price-input-group">
               <label>🥛 Milk price per litre (₹)</label>
@@ -127,9 +179,25 @@ function Dashboard() {
                 onChange={e => setEggPrice(Number(e.target.value))}
               />
             </div>
+
+            {/* Save button */}
+            <button
+              className="btn btn-primary save-price-btn"
+              onClick={handleSavePrices}
+              disabled={saving}
+            >
+              {saving ? '⏳ Saving...' : '💾 Save Prices'}
+            </button>
           </div>
 
-          {/* Income / Expense / Profit row */}
+          {/* Save feedback message */}
+          {saveMsg && (
+            <div className={`save-msg ${saveMsg.includes('✅') ? 'save-msg-ok' : 'save-msg-err'}`}>
+              {saveMsg}
+            </div>
+          )}
+
+          {/* ---- PROFIT BOXES ---- */}
           <div className="profit-grid">
             <div className="profit-box income">
               <div className="profit-box-label">💚 Total Income</div>
@@ -141,7 +209,6 @@ function Dashboard() {
                 Eggs: ₹{profit.eggIncome.toLocaleString()}
               </div>
             </div>
-
             <div className="profit-box expense">
               <div className="profit-box-label">🔴 Total Expenses</div>
               <div className="profit-box-value">
@@ -149,7 +216,6 @@ function Dashboard() {
               </div>
               <div className="profit-box-sub">This month</div>
             </div>
-
             <div className="profit-box result" style={{ borderColor: profitColor }}>
               <div className="profit-box-label">
                 {profit.profit >= 0 ? '🟢 Net Profit' : '🔴 Net Loss'}
@@ -173,11 +239,11 @@ function Dashboard() {
           </p>
         ) : (
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-              <XAxis
-                dataKey="day"
-                tick={{ fontSize: 12, fill: '#718096' }}
-              />
+            <BarChart
+              data={chartData}
+              margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
+            >
+              <XAxis dataKey="day" tick={{ fontSize: 12, fill: '#718096' }} />
               <YAxis tick={{ fontSize: 12, fill: '#718096' }} />
               <Tooltip
                 contentStyle={{
@@ -188,8 +254,8 @@ function Dashboard() {
                 }}
               />
               <Legend wrapperStyle={{ fontSize: '13px' }} />
-              <Bar dataKey="milk" name="Milk (L)"  fill="#4299e1" radius={[4,4,0,0]} />
-              <Bar dataKey="eggs" name="Eggs"      fill="#ecc94b" radius={[4,4,0,0]} />
+              <Bar dataKey="milk" name="Milk (L)" fill="#4299e1" radius={[4,4,0,0]} />
+              <Bar dataKey="eggs" name="Eggs"     fill="#ecc94b" radius={[4,4,0,0]} />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -200,16 +266,13 @@ function Dashboard() {
         <h2 className="section-title">🐄 Livestock Breakdown</h2>
         {livestock.length === 0 ? (
           <p className="empty-text">
-            No animals added yet.{' '}
-            <Link to="/livestock">Add animals →</Link>
+            No animals added yet. <Link to="/livestock">Add animals →</Link>
           </p>
         ) : (
           <div className="animal-list">
             {livestock.map(item => (
               <div key={item._id} className="animal-row">
-                <span className="animal-emoji">
-                  {animalEmoji[item._id] || '🐾'}
-                </span>
+                <span className="animal-emoji">{animalEmoji[item._id] || '🐾'}</span>
                 <span className="animal-type">{item._id}</span>
                 <span className="animal-count">{item.totalCount} animals</span>
               </div>

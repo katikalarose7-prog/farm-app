@@ -181,3 +181,47 @@
   .profit-grid  { grid-template-columns: 1fr; }
   .price-inputs { flex-direction: column; gap: 8px; }
 }
+
+/* ---- SAVE PRICES BUTTON ---- */
+.price-inputs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.save-price-btn {
+  padding: 9px 20px;
+  font-size: 14px;
+  white-space: nowrap;
+  align-self: flex-end;
+  margin-bottom: 2px;
+}
+
+.save-price-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Save confirmation message */
+.save-msg {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  display: inline-block;
+}
+
+.save-msg-ok  {
+  background: #f0fff4;
+  color: #276749;
+  border: 1px solid #c6f6d5;
+}
+
+.save-msg-err {
+  background: #fff5f5;
+  color: #c53030;
+  border: 1px solid #fed7d7;
+}
