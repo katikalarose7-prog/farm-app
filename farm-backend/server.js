@@ -9,27 +9,26 @@ const { protect } = require('./middleware/auth');
 const app  = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors(({
-  origin:["https://tullys-farm.netlify.app"],
-  credentials: true
-})));
+app.use(cors());
 app.use(express.json());
 
+// ---- Database ----
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.log('❌ DB Error:', err.message));
 
-// ---- PUBLIC ROUTES (no login needed) ----
+// ---- Public routes ----
 app.use('/api/auth', require('./routes/auth'));
 
-// ---- PROTECTED ROUTES (must be logged in) ----
-// Adding 'protect' here means ALL routes below require a valid token
+// ---- Protected routes ----
 app.use('/api/livestock',  protect, require('./routes/livestock'));
 app.use('/api/production', protect, require('./routes/production'));
 app.use('/api/workers',    protect, require('./routes/workers'));
 app.use('/api/expenses',   protect, require('./routes/expenses'));
 app.use('/api/profit',     protect, require('./routes/profit'));
+app.use('/api/settings',   protect, require('./routes/settings'));
+app.use('/api/categories', protect, require('./routes/categories'));
 
 app.get('/', (req, res) => res.json({ message: '🌾 Farm API running!' }));
 
-app.listen(PORT, "0.0.0.0", () => console.log(`🚀 Server on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server on http://localhost:${PORT}`));
