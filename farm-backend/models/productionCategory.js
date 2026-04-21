@@ -1,7 +1,6 @@
 // farm-backend/models/ProductionCategory.js
 const mongoose = require('mongoose');
 
-
 const productionCategorySchema = new mongoose.Schema({
   name:      { type: String, required: true, trim: true },
   unit:      { type: String, required: true, trim: true },
