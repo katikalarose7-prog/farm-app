@@ -1,35 +1,32 @@
 // farm-backend/middleware/auth.js
-// This function runs BEFORE any protected route
-// It checks that the request has a valid JWT token
-
 const jwt  = require('jsonwebtoken');
 const User = require('../models/User');
 
+// Verify JWT token — used on all protected routes
 const protect = async (req, res, next) => {
   let token;
-
-  // JWT is sent in the Authorization header as: "Bearer <token>"
-  if (req.headers.authorization &&
-      req.headers.authorization.startsWith('Bearer')) {
+  if (req.headers.authorization?.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
   }
-
   if (!token) {
     return res.status(401).json({ message: 'Not authorized. Please log in.' });
   }
-
   try {
-    // Verify token using our secret key
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Attach the user to the request object
-    // Now any controller can access req.user
-    req.user = await User.findById(decoded.id).select('-password');
-
-    next(); // ✅ Token valid — proceed to the route
-  } catch (error) {
-    return res.status(401).json({ message: 'Token invalid or expired. Please log in again.' });
+    req.user      = await User.findById(decoded.id).select('-password');
+    next();
+  } catch {
+    return res.status(401).json({ message: 'Token invalid or expired.' });
   }
 };
 
-module.exports = { protect };
+// Admin only — use after protect
+const adminOnly = (req, res, next) => {
+  if (req.user && req.user.role === 'admin') {
+    next();
+  } else {
+    res.status(403).json({ message: 'Admin access required.' });
+  }
+};
+
+module.exports = { protect, adminOnly };

@@ -90,3 +90,18 @@
 @media (max-width: 480px) {
   .login-card { padding: 28px 20px; }
 }
+
+/* Role info box on register */
+.role-info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #ebf8ff;
+  border: 1px solid #bee3f8;
+  color: #2a4365;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+}

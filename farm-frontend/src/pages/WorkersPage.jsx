@@ -4,6 +4,8 @@ import {
   getWorkers, addWorker, deleteWorker, markAttendance
 } from '../api/api';
 import './WorkersPages.css';
+import AdminOnly from '../components/AdminOnly';
+
 
 const emptyForm = { name: '', phone: '', role: '', monthlySalary: '' };
 
@@ -128,12 +130,16 @@ function WorkersPage() {
     <div className="page">
       <div className="page-header">
         <h1 className="page-title">👷 Workers</h1>
+        <AdminOnly>
+
         <button
           className="btn btn-primary"
           onClick={() => { setForm(emptyForm); setShowForm(!showForm); }}
         >
           {showForm ? '✕ Cancel' : '+ Add Worker'}
         </button>
+        </AdminOnly>
+
       </div>
 
       {error && <div className="error-box">{error}</div>}
@@ -370,6 +376,8 @@ function WorkersPage() {
                                 </span>
 
                                 {/* Toggle button group */}
+                                <AdminOnly>
+
                                 <div className="att-toggle-group">
                                   <button
                                     className={`att-opt ${status === true ? 'att-present-active' : ''}`}
@@ -391,8 +399,10 @@ function WorkersPage() {
                                 >
                                   🗑️ Remove worker
                                 </button>
-                              </div>
+                                </AdminOnly>
 
+                              </div>
+                              
                             </div>
                           </td>
                         </tr>

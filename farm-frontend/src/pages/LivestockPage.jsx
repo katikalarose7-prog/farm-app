@@ -8,6 +8,11 @@ import {
 } from '../api/api';
 import './LivestockPage.css';
 
+import AdminOnly from '../components/AdminOnly';
+import { useAuth } from '../context/AuthContext';
+
+
+
 // Empty form state — reused for both Add and Edit
 const emptyForm = { name: '', type: 'goat', count: '', breed: '', notes: '' };
 
@@ -18,6 +23,8 @@ function LivestockPage() {
   const [showForm, setShowForm]     = useState(false);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState('');
+
+  const { isAdmin } = useAuth();
 
   useEffect(() => { fetchAnimals(); }, []);
 
@@ -96,15 +103,26 @@ function LivestockPage() {
     <div className="page">
       <div className="page-header">
         <h1 className="page-title">🐐 Livestock</h1>
-        <button
-          className="btn btn-primary"
-          onClick={() => { handleCancel(); setShowForm(!showForm); }}
-        >
-          {showForm ? '✕ Cancel' : '+ Add Animal'}
-        </button>
+       <AdminOnly>
+  <button
+    className="btn btn-primary"
+    onClick={() => { handleCancel(); setShowForm(!showForm); }}
+  >
+    {showForm ? '✕ Cancel' : '+ Add Animal'}
+  </button>
+</AdminOnly>
       </div>
 
       {error && <div className="error-box">{error}</div>}
+
+      {!isAdmin && (
+  <div className="guest-banner">
+    👁️ You are in view-only mode. Contact the admin to make changes.
+  </div>
+)}
+
+
+
 
       {/* ---- ADD / EDIT FORM ---- */}
       {showForm && (
@@ -220,20 +238,22 @@ function LivestockPage() {
                 </div>
               )}
 
-              <div className="animal-card-footer">
-                <button
-                  className="btn btn-warning"
-                  onClick={() => handleEdit(animal)}
-                >
-                  ✏️ Edit
-                </button>
-                <button
-                  className="btn btn-danger"
-                  onClick={() => handleDelete(animal._id, animal.name)}
-                >
-                  🗑️ Delete
-                </button>
-              </div>
+            <div className="animal-card-footer">
+  <AdminOnly>
+    <button
+      className="btn btn-warning"
+      onClick={() => handleEdit(animal)}
+    >
+      ✏️ Edit
+    </button>
+    <button
+      className="btn btn-danger"
+      onClick={() => handleDelete(animal._id, animal.name)}
+    >
+      🗑️ Delete
+    </button>
+  </AdminOnly>
+</div>
             </div>
           ))}
         </div>

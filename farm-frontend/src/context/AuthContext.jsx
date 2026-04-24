@@ -6,42 +6,50 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user,    setUser]    = useState(null);
-  const [loading, setLoading] = useState(true); // true while checking localStorage
+  const [loading, setLoading] = useState(true);
 
-  // On app load — check if user was already logged in
   useEffect(() => {
-    const stored = localStorage.getItem('farmUser');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      setUser(parsed);
-      // Set axios default header so all requests include the token
-      axios.defaults.headers.common['Authorization'] = `Bearer ${parsed.token}`;
+    try {
+      const stored = localStorage.getItem('farmUser');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setUser(parsed);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${parsed.token}`;
+      }
+    } catch {
+      localStorage.removeItem('farmUser');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
-  // Called after successful login or register
   function saveUser(userData) {
     setUser(userData);
     localStorage.setItem('farmUser', JSON.stringify(userData));
     axios.defaults.headers.common['Authorization'] = `Bearer ${userData.token}`;
   }
 
-  // Called on logout
   function logout() {
     setUser(null);
     localStorage.removeItem('farmUser');
     delete axios.defaults.headers.common['Authorization'];
   }
 
+  // ---- Role helpers ---- 
+  // Use these anywhere: const { isAdmin } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  const isGuest = user?.role === 'guest';
+
   return (
-    <AuthContext.Provider value={{ user, loading, saveUser, logout }}>
+    <AuthContext.Provider value={{
+      user, loading, saveUser, logout,
+      isAdmin, isGuest
+    }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-// Custom hook — use this in any component
 export function useAuth() {
   return useContext(AuthContext);
 }

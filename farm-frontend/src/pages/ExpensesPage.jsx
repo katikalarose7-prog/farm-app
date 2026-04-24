@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { getExpenses, addExpense, deleteExpense } from '../api/api';
 import './ExpensesPage.css';
+import AdminOnly from '../components/AdminOnly';
 
 function getTodayDate() {
   return new Date().toISOString().split('T')[0];
@@ -137,12 +138,16 @@ function ExpensesPage() {
     <div className="page">
       <div className="page-header">
         <h1 className="page-title">💰 Expenses</h1>
+        <AdminOnly>
+
         <button
           className="btn btn-primary"
           onClick={() => { setForm(emptyForm); setShowForm(!showForm); }}
         >
           {showForm ? '✕ Cancel' : '+ Add Expense'}
         </button>
+        </AdminOnly>
+
       </div>
 
       {error && <div className="error-box">{error}</div>}
@@ -345,7 +350,11 @@ function ExpensesPage() {
                   </div>
                   <div className="exp-item-right">
                     <div className="exp-item-amount">₹{exp.amount.toLocaleString()}</div>
+                    <AdminOnly>
+
                     <button className="btn btn-danger delete-btn" onClick={() => handleDelete(exp._id, exp.title)}>🗑️</button>
+                    </AdminOnly>
+
                   </div>
                 </div>
               );

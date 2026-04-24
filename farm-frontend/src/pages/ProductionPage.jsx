@@ -5,6 +5,8 @@ import {
   getCategories, addCategory, deleteCategory
 } from '../api/api';
 import './ProductionPage.css';
+import AdminOnly from '../components/AdminOnly';
+
 
 function getTodayDate() {
   return new Date().toISOString().split('T')[0];
@@ -192,6 +194,8 @@ function ProductionPage() {
       <div className="page-header">
         <h1 className="page-title">🌾 Production</h1>
         <div className="header-btns">
+            <AdminOnly>
+
           <button
             className="btn btn-secondary"
             onClick={() => setShowCatMgr(!showCatMgr)}
@@ -204,6 +208,8 @@ function ProductionPage() {
           >
             {showForm ? '✕ Cancel' : '+ Add Entry'}
           </button>
+            </AdminOnly>
+
         </div>
       </div>
 
@@ -444,12 +450,16 @@ function ProductionPage() {
                     })}
                     <td className="notes-cell">{r.notes || '—'}</td>
                     <td>
+                      <AdminOnly>
+
                       <button
                         className="btn btn-danger delete-btn"
                         onClick={() => handleDeleteRecord(r._id)}
                       >
                         🗑️
                       </button>
+                      </AdminOnly>
+
                     </td>
                   </tr>
                 ))}
