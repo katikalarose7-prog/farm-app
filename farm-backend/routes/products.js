@@ -1,17 +1,16 @@
 // farm-backend/routes/products.js
 const express = require('express');
 const router  = express.Router();
-const {
-  getProducts, getAllProducts, addProduct, updateProduct
-} = require('../controllers/productController');
-const { protect } = require('../middleware/auth');
+const productController = require('../controllers/productController');
+const { protect, adminOnly } = require('../middleware/auth');
 
-// Public
-router.get('/', getProducts);
+// ✅ PUBLIC — no protect middleware
+router.get('/', productController.getProducts);
 
-// Admin
-router.get('/all',   protect, getAllProducts);
-router.post('/',     protect, addProduct);
-router.put('/:id',   protect, updateProduct);
+// Admin only
+router.get('/all',    protect, adminOnly, productController.getAllProducts);
+router.post('/',      protect, adminOnly, productController.addProduct);
+router.put('/:id',    protect, adminOnly, productController.updateProduct);
+router.delete('/:id', protect, adminOnly, productController.deleteProduct);
 
 module.exports = router;

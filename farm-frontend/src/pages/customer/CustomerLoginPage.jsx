@@ -27,57 +27,64 @@ function CustomerLoginPage() {
     setError('');
   }
 
-  // This function is called by onSubmit — uses axios POST
   async function handleSubmit(e) {
-    e.preventDefault();  // ← stops browser from doing GET navigation
-    setError('');
+  e.preventDefault();
+  setError('');
 
-    // Frontend validation
-    if (mode === 'register') {
-      if (!form.name.trim())
-        return setError('Please enter your name.');
-      if (!form.phone.trim())
-        return setError('Please enter your phone number.');
-      if (!form.email.trim())
-        return setError('Please enter your email.');
-      if (form.password.length < 6)
-        return setError('Password must be at least 6 characters.');
-      if (form.password !== form.confirm)
-        return setError('Passwords do not match.');
-    }
-
-    try {
-      setLoading(true);
-      let res;
-
-      if (mode === 'login') {
-        res = await customerLogin({
-          email:    form.email,
-          password: form.password
-        });
-      } else {
-        res = await customerRegister({
-          name:     form.name,
-          email:    form.email,
-          password: form.password,
-          phone:    form.phone,
-          address:  form.address || ''
-        });
-      }
-
-      saveCustomer(res.data);
-      navigate('/customer/shop');
-
-    } catch (err) {
-      console.log('Auth error:', err.response?.data);
-      setError(
-        err.response?.data?.message ||
-        'Something went wrong. Please try again.'
-      );
-    } finally {
-      setLoading(false);
-    }
+  if (mode === 'register') {
+    if (!form.name.trim())
+      return setError('Please enter your name.');
+    if (!form.phone.trim())
+      return setError('Please enter your phone number.');
+    if (!form.email.trim())
+      return setError('Please enter your email.');
+    if (form.password.length < 6)
+      return setError('Password must be at least 6 characters.');
+    if (form.password !== form.confirm)
+      return setError('Passwords do not match.');
   }
+
+  try {
+    setLoading(true);
+    let res;
+
+    if (mode === 'login') {
+      console.log('🔑 Logging in:', form.email);
+      res = await customerLogin({
+        email:    form.email,
+        password: form.password
+      });
+    } else {
+      console.log('📝 Registering:', form.email);
+      res = await customerRegister({
+        name:     form.name,
+        email:    form.email,
+        password: form.password,
+        phone:    form.phone,
+        address:  form.address || ''
+      });
+    }
+
+    console.log('✅ Success:', res.data);
+    saveCustomer(res.data);
+    navigate('/customer/shop');
+
+  } catch (err) {
+    // Log everything so we can see the exact error
+    console.log('❌ Status:', err.response?.status);
+    console.log('❌ Data:', err.response?.data);
+    console.log('❌ Message:', err.message);
+
+    setError(
+      err.response?.data?.message ||
+      err.response?.data?.error   ||
+      err.message                  ||
+      'Something went wrong. Please try again.'
+    );
+  } finally {
+    setLoading(false);
+  }
+}
 
   function switchMode(newMode) {
     setMode(newMode);

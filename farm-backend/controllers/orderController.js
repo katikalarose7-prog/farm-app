@@ -1,16 +1,15 @@
 // farm-backend/controllers/orderController.js
-const Order = require('../models/Order');
+const Order   = require('../models/Order');
+const Product = require('../models/Product');
 
 let sendOrderConfirmation, sendAdminNotification, sendStatusUpdate;
-
 try {
   const emailUtils      = require('../utils/sendEmail');
   sendOrderConfirmation = emailUtils.sendOrderConfirmation;
   sendAdminNotification = emailUtils.sendAdminNotification;
   sendStatusUpdate      = emailUtils.sendStatusUpdate;
-  console.log('✅ Email utils loaded');
 } catch (err) {
-  console.log('❌ Email utils failed to load:', err.message);
+  console.log('Email utils not loaded:', err.message);
 }
 
 // POST place order
@@ -29,6 +28,32 @@ exports.placeOrder = async (req, res) => {
       return res.status(400).json({ message: 'Cart is empty.' });
     }
 
+    // ---- Validate each item: stock + minQty ----
+    for (const item of items) {
+      const product = await Product.findById(item.productId);
+
+      if (!product) {
+        return res.status(400).json({
+          message: `Product "${item.productName}" no longer exists.`
+        });
+      }
+      if (!product.published || !product.available) {
+        return res.status(400).json({
+          message: `"${item.productName}" is no longer available.`
+        });
+      }
+      if (product.stock > 0 && item.quantity > product.stock) {
+        return res.status(400).json({
+          message: `Only ${product.stock} ${product.unit} of "${item.productName}" available.`
+        });
+      }
+      if (item.quantity < product.minOrderQty) {
+        return res.status(400).json({
+          message: `Minimum order for "${item.productName}" is ${product.minOrderQty} ${product.unit}.`
+        });
+      }
+    }
+
     const totalAmount = items.reduce((s, i) => s + i.totalPrice, 0);
 
     const order = await Order.create({
@@ -43,26 +68,22 @@ exports.placeOrder = async (req, res) => {
       paymentMethod: 'Cash on Delivery'
     });
 
-    console.log('✅ Order created:', order._id);
-    console.log('📧 Sending emails to:', customerEmail);
+    // Reduce stock for each product
+    for (const item of items) {
+      if (item.productId) {
+        await Product.findByIdAndUpdate(
+          item.productId,
+          { $inc: { stock: -item.quantity } }
+        );
+      }
+    }
 
     // Send emails
     try {
-      if (sendOrderConfirmation) {
-        await sendOrderConfirmation(order);
-        console.log('✅ Confirmation email sent to customer');
-      } else {
-        console.log('❌ sendOrderConfirmation not available');
-      }
-
-      if (sendAdminNotification) {
-        await sendAdminNotification(order);
-        console.log('✅ Notification email sent to admin');
-      } else {
-        console.log('❌ sendAdminNotification not available');
-      }
+      if (sendOrderConfirmation) await sendOrderConfirmation(order);
+      if (sendAdminNotification) await sendAdminNotification(order);
     } catch (emailError) {
-      console.log('❌ Email sending failed:', emailError.message);
+      console.log('Email error:', emailError.message);
     }
 
     res.status(201).json({
@@ -72,7 +93,7 @@ exports.placeOrder = async (req, res) => {
     });
 
   } catch (error) {
-    console.log('❌ Place order error:', error.message);
+    console.log('Place order error:', error.message);
     res.status(500).json({ message: 'Could not place order.', error: error.message });
   }
 };
@@ -130,45 +151,66 @@ exports.markAllRead = async (req, res) => {
   }
 };
 
-// PUT update order status — sends email to customer
+// PUT update order status
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
     const valid = ['pending', 'confirmed', 'delivered', 'cancelled'];
-
     if (!valid.includes(status)) {
       return res.status(400).json({ message: 'Invalid status.' });
     }
 
     const order = await Order.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
+      req.params.id, { status }, { new: true }
     );
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
 
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found.' });
+    // If cancelled — restore stock
+    if (status === 'cancelled') {
+      for (const item of order.items) {
+        if (item.productId) {
+          await Product.findByIdAndUpdate(
+            item.productId,
+            { $inc: { stock: item.quantity } }
+          );
+        }
+      }
     }
 
-    console.log('✅ Order status updated to:', status);
-    console.log('📧 Sending status email to:', order.customerEmail);
-
-    // Send status update email
     try {
-      if (sendStatusUpdate) {
-        await sendStatusUpdate(order);
-        console.log('✅ Status email sent to:', order.customerEmail);
-      } else {
-        console.log('❌ sendStatusUpdate not available');
-      }
+      if (sendStatusUpdate) await sendStatusUpdate(order);
     } catch (emailError) {
-      console.log('❌ Status email failed:', emailError.message);
+      console.log('Status email error:', emailError.message);
     }
 
     res.json(order);
-
   } catch (error) {
-    console.log('❌ Update status error:', error.message);
     res.status(500).json({ message: 'Error updating status.' });
+  }
+};
+
+// GET revenue from delivered orders only
+exports.getRevenue = async (req, res) => {
+  try {
+    const deliveredOrders = await Order.find({ status: 'delivered' });
+
+    const totalRevenue = deliveredOrders.reduce(
+      (s, o) => s + o.totalAmount, 0
+    );
+
+    const monthlyRevenue = {};
+    deliveredOrders.forEach(order => {
+      const key = new Date(order.createdAt)
+        .toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+      monthlyRevenue[key] = (monthlyRevenue[key] || 0) + order.totalAmount;
+    });
+
+    res.json({
+      totalRevenue,
+      deliveredCount: deliveredOrders.length,
+      monthlyRevenue
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching revenue.' });
   }
 };

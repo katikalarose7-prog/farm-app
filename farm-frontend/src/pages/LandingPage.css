@@ -883,3 +883,29 @@
   .cart-drawer,
   .checkout-drawer { width: 100vw; }
 }
+
+/* Login prompt popup */
+.land-login-prompt {
+  background: white;
+  border-radius: 20px;
+  padding: 36px 28px;
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+  margin: auto;
+  animation: popIn 0.3s ease;
+}
+
+.land-login-prompt h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a202c;
+  margin-bottom: 10px;
+}
+
+.land-login-prompt p {
+  font-size: 14px;
+  color: #4a5568;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}

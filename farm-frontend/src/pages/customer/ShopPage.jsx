@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate }         from 'react-router-dom';
 import { getProducts, placeOrder } from '../../api/api';
-import { useCustomerAuth }     from '../../context/CustomerAuthContext';
+import { useCustomerAuth }         from '../../context/CustomerAuthContext';
 import './ShopPage.css';
 
 function ShopPage() {
@@ -16,8 +16,8 @@ function ShopPage() {
   const [showSuccess,  setShowSuccess]  = useState(false);
   const [submitting,   setSubmitting]   = useState(false);
   const [loading,      setLoading]      = useState(true);
+  const [cartError,    setCartError]    = useState('');
 
-  // Pre-fill delivery form from customer profile
   const [form, setForm] = useState({
     customerName:    customer?.name    || '',
     customerEmail:   customer?.email   || '',
@@ -34,38 +34,71 @@ function ShopPage() {
   async function fetchProducts() {
     try {
       const res = await getProducts();
+      // Only published products come from backend
       setProducts(res.data);
+    } catch {
+      console.log('Could not load products');
     } finally {
       setLoading(false);
     }
   }
 
-  // ---- Cart helpers ----
+  // ---- Stock helper ----
+  function getStockStatus(product) {
+    if (product.stock === 0) return 'out';
+    if (product.stock <= 2) return 'critical';
+    if (product.stock <= 5) return 'low';
+    return 'ok';
+  }
+
+  // ---- Add to cart with min qty enforcement ----
   function addToCart(product) {
+    setCartError('');
+    const minQty    = product.minOrderQty || 1;
+    const inCart    = cart[product._id]?.quantity || 0;
+    const newQty    = inCart === 0 ? minQty : inCart + 1;
+
+    // Check stock
+    if (product.stock > 0 && newQty > product.stock) {
+      setCartError(`Only ${product.stock} ${product.unit} available for ${product.name}.`);
+      return;
+    }
+
     setCart(prev => ({
       ...prev,
       [product._id]: {
         ...product,
-        quantity: (prev[product._id]?.quantity || 0) + 1
+        quantity: newQty
       }
     }));
   }
 
-  function removeFromCart(id) {
-    setCart(prev => {
-      const u = { ...prev };
-      if (u[id]?.quantity > 1) {
-        u[id] = { ...u[id], quantity: u[id].quantity - 1 };
-      } else {
-        delete u[id];
-      }
-      return u;
-    });
+  // ---- Remove from cart respecting min qty ----
+  function removeFromCart(product) {
+    setCartError('');
+    const minQty = product.minOrderQty || 1;
+    const inCart = cart[product._id]?.quantity || 0;
+
+    if (inCart <= minQty) {
+      // Remove completely
+      setCart(prev => {
+        const u = { ...prev };
+        delete u[product._id];
+        return u;
+      });
+    } else {
+      setCart(prev => ({
+        ...prev,
+        [product._id]: { ...prev[product._id], quantity: inCart - 1 }
+      }));
+    }
   }
 
   const cartItems = Object.values(cart);
   const cartCount = cartItems.reduce((s, i) => s + i.quantity, 0);
-  const cartTotal = cartItems.reduce((s, i) => s + i.pricePerUnit * i.quantity, 0);
+  const cartTotal = cartItems.reduce(
+    (s, i) => s + i.pricePerUnit * i.quantity, 0
+  );
 
   async function handlePlaceOrder(e) {
     e.preventDefault();
@@ -73,7 +106,9 @@ function ShopPage() {
         !form.customerPhone || !form.deliveryAddress) {
       return alert('Please fill all delivery details.');
     }
+
     const items = cartItems.map(i => ({
+      productId:    i._id,
       productName:  i.name,
       emoji:        i.emoji,
       unit:         i.unit,
@@ -89,16 +124,12 @@ function ShopPage() {
       setShowCheckout(false);
       setShowCart(false);
       setShowSuccess(true);
+      fetchProducts(); // Refresh stock
     } catch (err) {
       alert(err.response?.data?.message || 'Could not place order.');
     } finally {
       setSubmitting(false);
     }
-  }
-
-  function handleLogout() {
-    logoutCustomer();
-    navigate('/');
   }
 
   return (
@@ -130,54 +161,114 @@ function ShopPage() {
             <span className="shop-welcome">
               👋 {customer?.name?.split(' ')[0]}
             </span>
-            <button className="shop-logout" onClick={handleLogout}>
+            <button
+              className="shop-logout"
+              onClick={() => { logoutCustomer(); navigate('/'); }}
+            >
               Logout
             </button>
           </div>
         </div>
       </nav>
 
-      {/* ---- HERO BANNER ---- */}
+      {/* ---- HERO ---- */}
       <div className="shop-hero">
-        <h1>Fresh Farm Products</h1>
-        <p>Straight from our farm to your doorstep. Cash on delivery.</p>
+        <h1>🌾 Fresh Farm Products</h1>
+        <p>Straight from our farm · Cash on delivery only</p>
       </div>
 
-      {/* ---- PRODUCTS GRID ---- */}
+      {/* Cart error */}
+      {cartError && (
+        <div className="shop-cart-error" onClick={() => setCartError('')}>
+          ⚠️ {cartError}
+        </div>
+      )}
+
+      {/* ---- PRODUCTS ---- */}
       <div className="shop-content">
         {loading ? (
           <div className="shop-loading">Loading products...</div>
+        ) : products.length === 0 ? (
+          <div className="shop-no-products">
+            <div style={{ fontSize: 44 }}>🌾</div>
+            <p>No products available right now. Check back soon!</p>
+          </div>
         ) : (
           <div className="shop-products-grid">
-            {products.map(product => (
-              <div key={product._id} className="shop-product-card">
-                <div className="shop-product-emoji">{product.emoji}</div>
-                <div className="shop-product-info">
-                  <h3>{product.name}</h3>
-                  <p>{product.description}</p>
-                  <div className="shop-product-footer">
-                    <div className="shop-product-price">
-                      ₹{product.pricePerUnit}
-                      <span>/{product.unit}</span>
+            {products.map(product => {
+              const stockStatus = getStockStatus(product);
+              const isOutOfStock = stockStatus === 'out';
+              const inCart = cart[product._id]?.quantity || 0;
+              const minQty = product.minOrderQty || 1;
+
+              return (
+                <div
+                  key={product._id}
+                  className={`shop-product-card ${isOutOfStock ? 'out-of-stock' : ''}`}
+                >
+                  {/* Stock badge */}
+                  {stockStatus === 'out' && (
+                    <div className="sp-stock-badge out">Out of Stock</div>
+                  )}
+                  {stockStatus === 'critical' && (
+                    <div className="sp-stock-badge critical">
+                      Only {product.stock} left!
                     </div>
-                    {cart[product._id] ? (
-                      <div className="qty-ctrl">
-                        <button onClick={() => removeFromCart(product._id)}>−</button>
-                        <span>{cart[product._id].quantity}</span>
-                        <button onClick={() => addToCart(product)}>+</button>
+                  )}
+                  {stockStatus === 'low' && (
+                    <div className="sp-stock-badge low">
+                      Low Stock ({product.stock})
+                    </div>
+                  )}
+
+                  <div className="shop-product-emoji">{product.emoji}</div>
+
+                  <div className="shop-product-body">
+                    <h3>{product.name}</h3>
+                    {product.description && <p>{product.description}</p>}
+
+                    {/* Min order note */}
+                    {minQty > 1 && (
+                      <div className="sp-min-note">
+                        Min order: {minQty} {product.unit}
                       </div>
-                    ) : (
-                      <button
-                        className="shop-add-btn"
-                        onClick={() => addToCart(product)}
-                      >
-                        Add
-                      </button>
                     )}
+
+                    <div className="shop-product-footer">
+                      <div className="shop-product-price">
+                        ₹{product.pricePerUnit}
+                        <span>/{product.unit}</span>
+                      </div>
+
+                      {isOutOfStock ? (
+                        <button className="shop-add-btn disabled" disabled>
+                          Out of Stock
+                        </button>
+                      ) : inCart > 0 ? (
+                        <div className="qty-ctrl">
+                          <button onClick={() => removeFromCart(product)}>−</button>
+                          <span>{inCart}</span>
+                          <button
+                            onClick={() => addToCart(product)}
+                            disabled={product.stock > 0 && inCart >= product.stock}
+                          >
+                            +
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          className="shop-add-btn"
+                          onClick={() => addToCart(product)}
+                        >
+                          + Add
+                          {minQty > 1 ? ` (min ${minQty})` : ''}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -204,7 +295,7 @@ function ShopPage() {
               <div className="drawer-empty">
                 <div style={{ fontSize: 44 }}>🛒</div>
                 <p>Cart is empty</p>
-                <button onClick={() => setShowCart(false)}>
+                <button className="checkout-btn" onClick={() => setShowCart(false)}>
                   Browse Products
                 </button>
               </div>
@@ -217,13 +308,21 @@ function ShopPage() {
                       <div className="di-info">
                         <div className="di-name">{item.name}</div>
                         <div className="di-price">
-                          ₹{item.pricePerUnit} × {item.quantity}
+                          ₹{item.pricePerUnit} × {item.quantity} {item.unit}
                         </div>
+                        {item.minOrderQty > 1 && (
+                          <div style={{ fontSize: 11, color: '#a0aec0' }}>
+                            Min: {item.minOrderQty} {item.unit}
+                          </div>
+                        )}
                       </div>
                       <div className="qty-ctrl sm">
-                        <button onClick={() => removeFromCart(item._id)}>−</button>
+                        <button onClick={() => removeFromCart(item)}>−</button>
                         <span>{item.quantity}</span>
-                        <button onClick={() => addToCart(item)}>+</button>
+                        <button
+                          onClick={() => addToCart(item)}
+                          disabled={item.stock > 0 && item.quantity >= item.stock}
+                        >+</button>
                       </div>
                       <div className="di-total">
                         ₹{item.pricePerUnit * item.quantity}
@@ -239,17 +338,11 @@ function ShopPage() {
                   <div className="cod-pill">💵 Cash on Delivery Only</div>
                   <button
                     className="checkout-btn"
-                    onClick={() => {
-                      setShowCart(false);
-                      setShowCheckout(true);
-                    }}
+                    onClick={() => { setShowCart(false); setShowCheckout(true); }}
                   >
                     Proceed to Checkout →
                   </button>
-                  <button
-                    className="clear-btn"
-                    onClick={() => setCart({})}
-                  >
+                  <button className="clear-btn" onClick={() => setCart({})}>
                     Clear Cart
                   </button>
                 </div>
@@ -267,12 +360,10 @@ function ShopPage() {
               <h2>📦 Checkout</h2>
               <button onClick={() => setShowCheckout(false)}>✕</button>
             </div>
-
-            {/* Order summary */}
             <div className="co-summary">
               {cartItems.map(item => (
                 <div key={item._id} className="co-item">
-                  <span>{item.emoji} {item.name} × {item.quantity}</span>
+                  <span>{item.emoji} {item.name} × {item.quantity} {item.unit}</span>
                   <span>₹{item.pricePerUnit * item.quantity}</span>
                 </div>
               ))}
@@ -282,11 +373,8 @@ function ShopPage() {
               </div>
               <div className="cod-pill">💵 Cash on Delivery</div>
             </div>
-
-            {/* Delivery form */}
             <form onSubmit={handlePlaceOrder} className="co-form">
               <h3>Delivery Details</h3>
-
               <div className="form-group">
                 <label>Full Name *</label>
                 <input
@@ -319,6 +407,7 @@ function ShopPage() {
                   onChange={e => setForm({...form, deliveryAddress: e.target.value})}
                   placeholder="Full address with landmark"
                   rows={3}
+                  style={{ resize: 'vertical' }}
                 />
               </div>
               <div className="form-group">
@@ -329,7 +418,6 @@ function ShopPage() {
                   placeholder="Any special instructions"
                 />
               </div>
-
               <button
                 type="submit"
                 className="place-btn"
@@ -351,11 +439,12 @@ function ShopPage() {
             <div style={{ fontSize: 52 }}>🎉</div>
             <h2>Order Placed!</h2>
             <p>
-              Thank you! We've received your order and will contact
-              you to confirm delivery.
+              Thank you! Confirmation sent to{' '}
+              <strong>{form.customerEmail}</strong>
             </p>
             <div className="success-info">
               💵 Cash on Delivery<br/>
+              📧 Check your email<br/>
               📞 We'll call to confirm
             </div>
             <button
@@ -375,7 +464,6 @@ function ShopPage() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

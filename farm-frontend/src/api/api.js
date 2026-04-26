@@ -3,28 +3,39 @@ import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Create one axios instance for everything
-const api = axios.create({
-  baseURL: BASE_URL
-});
+// ---- ADMIN INSTANCE ----
+// Only attaches farmUser (admin) token
+const api = axios.create({ baseURL: BASE_URL });
 
-// ONE single interceptor — checks both admin and customer tokens
 api.interceptors.request.use((config) => {
   try {
-    const farmUser   = JSON.parse(localStorage.getItem('farmUser')   || 'null');
-    const farmCustomer = JSON.parse(localStorage.getItem('farmCustomer') || 'null');
-
-    // Customer token takes priority on customer pages, admin on dashboard
-    const token = farmCustomer?.token || farmUser?.token;
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const farmUser = JSON.parse(localStorage.getItem('farmUser') || 'null');
+    if (farmUser?.token) {
+      config.headers.Authorization = `Bearer ${farmUser.token}`;
     }
-  } catch {
-    // ignore parse errors
-  }
+  } catch { /* ignore */ }
   return config;
 });
+
+// ---- CUSTOMER INSTANCE ----
+// Only attaches farmCustomer token
+const customerApi = axios.create({ baseURL: BASE_URL });
+
+customerApi.interceptors.request.use((config) => {
+  try {
+    const farmCustomer = JSON.parse(localStorage.getItem('farmCustomer') || 'null');
+    if (farmCustomer?.token) {
+      config.headers.Authorization = `Bearer ${farmCustomer.token}`;
+    }
+  } catch { /* ignore */ }
+  return config;
+});
+
+export default api;
+
+// ================================================================
+// ADMIN ROUTES — use admin token
+// ================================================================
 
 // ---- LIVESTOCK ----
 export const getLivestock        = ()         => api.get('/livestock');
@@ -66,24 +77,39 @@ export const getCategories  = ()     => api.get('/categories');
 export const addCategory    = (data) => api.post('/categories', data);
 export const deleteCategory = (id)   => api.delete(`/categories/${id}`);
 
-// ---- PRODUCTS ----
-export const getProducts   = ()         => api.get('/products');
+// ---- PRODUCTS (admin manages) ----
 export const getAllProducts = ()         => api.get('/products/all');
 export const addProduct    = (data)     => api.post('/products', data);
 export const updateProduct = (id, data) => api.put(`/products/${id}`, data);
+export const deleteProduct = (id)       => api.delete(`/products/${id}`);
 
-// ---- ORDERS ----
-export const placeOrder        = (data)       => api.post('/orders', data);
+// ---- ORDERS (admin) ----
 export const getAllOrders       = ()           => api.get('/orders');
 export const getUnreadCount    = ()           => api.get('/orders/unread-count');
 export const markAllRead       = ()           => api.put('/orders/mark-all-read');
 export const markOrderRead     = (id)         => api.put(`/orders/${id}/read`);
 export const updateOrderStatus = (id, status) => api.put(`/orders/${id}/status`, { status });
-export const getMyOrders       = ()           => api.get('/orders/mine');
+export const getRevenue        = ()           => api.get('/orders/revenue');
+
+// ---- ADMIN AUTH ----
+export const getAllUsers    = ()           => api.get('/auth/users');
+export const updateUserRole = (id, role)  => api.put(`/auth/users/${id}/role`, { role });
+
+// ================================================================
+// CUSTOMER ROUTES — use customer token
+// ================================================================
+
+// ---- PRODUCTS (customer views published only) ----
+export const getProducts = () => customerApi.get('/products');
 
 // ---- CUSTOMER AUTH ----
-export const customerRegister = (data) => api.post('/auth/customer/register', data);
-export const customerLogin    = (data) => api.post('/auth/customer/login', data);
-export const updateProfile    = (data) => api.put('/auth/profile', data);
+export const customerRegister = (data) =>
+  customerApi.post('/auth/customer/register', data);
+export const customerLogin = (data) =>
+  customerApi.post('/auth/customer/login', data);
+export const updateProfile = (data) =>
+  customerApi.put('/auth/profile', data);
 
-export default api;
+// ---- CUSTOMER ORDERS ----
+export const placeOrder  = (data) => customerApi.post('/orders', data);
+export const getMyOrders = ()     => customerApi.get('/orders/mine');

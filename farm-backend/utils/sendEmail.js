@@ -268,7 +268,7 @@ exports.sendAdminNotification = async (order) => {
           `).join('')}
         </div>
 
-        <a href="${process.env.FRONTEND_URL || 'https://tully-farms.pages.dev'}/dashboard/orders"
+        <a href="${process.env.FRONTEND_URL || 'https://tullys-farm.pages.dev'}/dashboard/orders"
            style="display:block;background:#2d6a4f;color:white;text-align:center;
                   padding:14px;border-radius:10px;text-decoration:none;
                   font-size:15px;font-weight:700">

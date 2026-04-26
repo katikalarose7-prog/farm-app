@@ -503,3 +503,71 @@
   .shop-products-grid { grid-template-columns: 1fr 1fr; }
   .shop-drawer     { width: 100vw; }
 }
+
+/* Add to ShopPage.css */
+
+/* Stock badge on product card */
+.sp-stock-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+
+.sp-stock-badge.out      { background: #fed7d7; color: #742a2a; }
+.sp-stock-badge.critical { background: #fed7d7; color: #742a2a; }
+.sp-stock-badge.low      { background: #fefcbf; color: #744210; }
+
+/* Out of stock card */
+.shop-product-card.out-of-stock {
+  opacity: 0.65;
+  pointer-events: none; /* disable clicks except the badge */
+}
+
+.shop-product-card.out-of-stock .shop-product-emoji {
+  filter: grayscale(1);
+}
+
+/* Disabled add button */
+.shop-add-btn.disabled {
+  background: #e2e8f0;
+  color: #a0aec0;
+  cursor: not-allowed;
+}
+
+/* Min order note */
+.sp-min-note {
+  font-size: 11px;
+  color: #718096;
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 3px 8px;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+/* Cart error banner */
+.shop-cart-error {
+  background: #fff5f5;
+  border: 1px solid #fc8181;
+  color: #c53030;
+  padding: 10px 16px;
+  margin: 0 24px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+
+/* No products state */
+.shop-no-products {
+  text-align: center;
+  padding: 60px 20px;
+  color: #a0aec0;
+  font-size: 15px;
+}
+.shop-no-products div { margin-bottom: 12px; }

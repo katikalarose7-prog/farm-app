@@ -9,6 +9,7 @@ const links = [
   { to: '/dashboard',            label: '🏠 Home'       },
   { to: '/dashboard/livestock',  label: '🐐 Livestock'  },
   { to: '/dashboard/production', label: '🌾 Production' },
+  { to: '/dashboard/products',   label: '🛒 Products'   }, // ← new
   { to: '/dashboard/workers',    label: '👷 Workers'    },
   { to: '/dashboard/expenses',   label: '💰 Expenses'   },
 ];
@@ -114,7 +115,7 @@ function Navbar() {
         ))}
         {isAdmin && (
           <NavLink
-            to="/orders"
+            to="/dashboard/orders"
             className={({ isActive }) =>
               isActive ? 'bottom-link active' : 'bottom-link'
             }

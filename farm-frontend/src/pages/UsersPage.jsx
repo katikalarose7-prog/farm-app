@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-
+import { getAllUsers, updateUserRole } from '../api/api'; // adjust path
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 function UsersPage() {
@@ -17,7 +17,7 @@ function UsersPage() {
     fetchUsers();
   }, [isAdmin]);
 
-  async function fetchUsers() {
+  /*async function fetchUsers() {
     try {
       const res = await axios.get(`${BASE_URL}/auth/users`);
       setUsers(res.data);
@@ -26,7 +26,17 @@ function UsersPage() {
     } finally {
       setLoading(false);
     }
+  }*/
+ async function fetchUsers() {
+  try {
+    const res = await getAllUsers();
+    setUsers(res.data);
+  } catch {
+    alert('Could not load users.');
+  } finally {
+    setLoading(false);
   }
+}
 
   async function handleRoleChange(id, newRole) {
     try {

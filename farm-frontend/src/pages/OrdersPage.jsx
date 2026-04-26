@@ -1,8 +1,10 @@
 // src/pages/OrdersPage.jsx
 import { useEffect, useState } from 'react';
 import {
-  getAllOrders, updateOrderStatus,
-  markOrderRead, markAllRead
+  getAllOrders,
+  updateOrderStatus,
+  markOrderRead,
+  markAllRead
 } from '../api/api';
 import './OrdersPage.css';
 
@@ -14,32 +16,39 @@ const STATUS_CONFIG = {
 };
 
 function OrdersPage() {
-  const [orders,     setOrders]     = useState([]);
-  const [loading,    setLoading]    = useState(true);
-  const [expanded,   setExpanded]   = useState(null);
-  const [filterStatus, setFilter]  = useState('all');
+  const [orders,       setOrders]       = useState([]);
+  const [loading,      setLoading]      = useState(true);
+  const [error,        setError]        = useState('');
+  const [expanded,     setExpanded]     = useState(null);
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [updating,     setUpdating]     = useState(null);
 
   useEffect(() => { fetchOrders(); }, []);
 
   async function fetchOrders() {
     try {
       setLoading(true);
+      setError('');
       const res = await getAllOrders();
       setOrders(res.data);
-    } catch {
-      alert('Could not load orders.');
+    } catch (err) {
+      console.log('Orders fetch error:', err);
+      setError('Could not load orders. Please try again.');
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleStatus(id, status) {
+  async function handleStatus(orderId, status) {
     try {
-      await updateOrderStatus(id, status);
-      await markOrderRead(id);
+      setUpdating(orderId);
+      await updateOrderStatus(orderId, status);
+      await markOrderRead(orderId);
       fetchOrders();
     } catch {
       alert('Could not update status.');
+    } finally {
+      setUpdating(null);
     }
   }
 
@@ -54,8 +63,11 @@ function OrdersPage() {
 
   function formatDate(d) {
     return new Date(d).toLocaleDateString('en-IN', {
-      day: 'numeric', month: 'short', year: 'numeric',
-      hour: '2-digit', minute: '2-digit'
+      day:    'numeric',
+      month:  'short',
+      year:   'numeric',
+      hour:   '2-digit',
+      minute: '2-digit'
     });
   }
 
@@ -65,7 +77,6 @@ function OrdersPage() {
 
   const unreadCount = orders.filter(o => !o.isRead).length;
 
-  // Summary counts
   const counts = {
     all:       orders.length,
     pending:   orders.filter(o => o.status === 'pending').length,
@@ -79,22 +90,30 @@ function OrdersPage() {
     .reduce((s, o) => s + o.totalAmount, 0);
 
   return (
-    <div className="page">
-      <div className="page-header">
-        <h1 className="page-title">📦 Orders</h1>
+    <div className="page orders-page">
+
+      {/* ---- HEADER ---- */}
+      <div className="orders-header">
+        <h1 className="page-title" style={{ marginBottom: 0 }}>
+          📦 Orders
+        </h1>
         {unreadCount > 0 && (
-          <button className="btn btn-primary" onClick={handleMarkAllRead}>
+          <button className="btn btn-primary mark-read-btn" onClick={handleMarkAllRead}>
             ✅ Mark all read ({unreadCount})
           </button>
         )}
       </div>
 
-      {/* Summary cards */}
+      {error && (
+        <div className="error-box" style={{ marginBottom: 12 }}>{error}</div>
+      )}
+
+      {/* ---- SUMMARY CARDS ---- */}
       <div className="orders-summary">
         <div className="osum-card">
           <div className="osum-icon">📦</div>
           <div className="osum-val">{counts.all}</div>
-          <div className="osum-lbl">Total Orders</div>
+          <div className="osum-lbl">Total</div>
         </div>
         <div className="osum-card pending-card">
           <div className="osum-icon">⏳</div>
@@ -114,98 +133,131 @@ function OrdersPage() {
         <div className="osum-card revenue-card">
           <div className="osum-icon">💰</div>
           <div className="osum-val">₹{totalRevenue.toLocaleString()}</div>
-          <div className="osum-lbl">Total Revenue</div>
+          <div className="osum-lbl">Revenue</div>
         </div>
       </div>
 
-      {/* Filter tabs */}
-      <div className="filter-tabs" style={{ marginBottom: 12 }}>
-        {['all','pending','confirmed','delivered','cancelled'].map(s => (
+      {/* ---- FILTER TABS ---- */}
+      <div className="orders-filter-tabs">
+        {[
+          { key: 'all',       label: `All (${counts.all})`                              },
+          { key: 'pending',   label: `⏳ Pending (${counts.pending})`                   },
+          { key: 'confirmed', label: `✅ Confirmed (${counts.confirmed})`               },
+          { key: 'delivered', label: `🚚 Delivered (${counts.delivered})`               },
+          { key: 'cancelled', label: `❌ Cancelled (${counts.cancelled})`               },
+        ].map(tab => (
           <button
-            key={s}
-            className={`filter-tab ${filterStatus === s ? 'active' : ''}`}
-            onClick={() => setFilter(s)}
+            key={tab.key}
+            className={`orders-filter-tab ${filterStatus === tab.key ? 'active' : ''}`}
+            onClick={() => setFilterStatus(tab.key)}
           >
-            {s === 'all' ? `All (${counts.all})`
-              : `${STATUS_CONFIG[s].emoji} ${STATUS_CONFIG[s].label} (${counts[s]})`}
+            {tab.label}
           </button>
         ))}
       </div>
 
-      {/* Orders list */}
+      {/* ---- ORDERS LIST ---- */}
       {loading ? (
-        <p className="loading-text">Loading orders...</p>
+        <div className="orders-loading">
+          <div className="orders-spinner" />
+          <p>Loading orders...</p>
+        </div>
       ) : filtered.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">📭</div>
+        <div className="orders-empty">
+          <div className="orders-empty-icon">📭</div>
           <p>No {filterStatus === 'all' ? '' : filterStatus} orders yet.</p>
+          {filterStatus !== 'all' && (
+            <button
+              className="btn"
+              onClick={() => setFilterStatus('all')}
+            >
+              Show all orders
+            </button>
+          )}
         </div>
       ) : (
         <div className="orders-list">
           {filtered.map(order => {
-            const cfg        = STATUS_CONFIG[order.status];
+            const cfg        = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
             const isExpanded = expanded === order._id;
+            const isUpdating = updating === order._id;
 
             return (
               <div
                 key={order._id}
                 className={`order-card ${!order.isRead ? 'unread' : ''}`}
               >
-                {/* Unread dot */}
+                {/* Unread indicator dot */}
                 {!order.isRead && <div className="unread-dot" />}
 
-                {/* Order header */}
+                {/* ---- CARD HEADER ---- */}
                 <div
-                  className="order-header"
+                  className="order-card-header"
                   onClick={() => {
                     setExpanded(isExpanded ? null : order._id);
-                    if (!order.isRead) markOrderRead(order._id).then(fetchOrders);
+                    if (!order.isRead) {
+                      markOrderRead(order._id).then(fetchOrders);
+                    }
                   }}
                 >
-                  <div className="order-header-left">
+                  <div className="order-card-left">
                     <div className="order-customer-name">
                       {order.customerName}
                     </div>
-                    <div className="order-meta">
-                      📞 {order.customerPhone} &nbsp;·&nbsp;
-                      📧 {order.customerEmail} &nbsp;·&nbsp;
+                    <div className="order-card-meta">
+                      📞 {order.customerPhone}
+                    </div>
+                    <div className="order-card-meta">
                       🕐 {formatDate(order.createdAt)}
+                    </div>
+                    <div className="order-items-preview">
+                      {order.items.slice(0, 2).map((i, idx) => (
+                        <span key={idx} className="order-item-chip">
+                          {i.emoji} {i.productName} ×{i.quantity}
+                        </span>
+                      ))}
+                      {order.items.length > 2 && (
+                        <span className="order-item-chip">
+                          +{order.items.length - 2} more
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  <div className="order-header-right">
+                  <div className="order-card-right">
                     <div className="order-amount">
                       ₹{order.totalAmount.toLocaleString()}
                     </div>
                     <span
                       className="order-status-badge"
-                      style={{ background: cfg.color, color: cfg.text }}
+                      style={{
+                        background: cfg.color,
+                        color:      cfg.text
+                      }}
                     >
                       {cfg.emoji} {cfg.label}
                     </span>
-                    <button className={`expand-btn ${isExpanded ? 'open' : ''}`}>
+                    <span className={`order-expand-btn ${isExpanded ? 'open' : ''}`}>
                       ▾
-                    </button>
+                    </span>
                   </div>
                 </div>
 
-                {/* Expanded details */}
+                {/* ---- EXPANDED PANEL ---- */}
                 {isExpanded && (
-                  <div className="order-details">
+                  <div className="order-expanded">
 
                     {/* Items */}
-                    <div className="order-items">
+                    <div className="order-section">
                       <div className="order-section-title">🛒 Items Ordered</div>
                       {order.items.map((item, i) => (
-                        <div key={i} className="order-item">
-                          <span className="order-item-emoji">{item.emoji}</span>
-                          <span className="order-item-name">{item.productName}</span>
-                          <span className="order-item-qty">
+                        <div key={i} className="order-item-row">
+                          <span className="oi-emoji">{item.emoji}</span>
+                          <span className="oi-name">{item.productName}</span>
+                          <span className="oi-qty">
                             × {item.quantity} {item.unit}
                           </span>
-                          <span className="order-item-price">
-                            ₹{item.totalPrice}
-                          </span>
+                          <span className="oi-price">₹{item.totalPrice}</span>
                         </div>
                       ))}
                       <div className="order-items-total">
@@ -215,18 +267,26 @@ function OrdersPage() {
                     </div>
 
                     {/* Delivery info */}
-                    <div className="order-delivery">
-                      <div className="order-section-title">🚚 Delivery Details</div>
-                      <div className="delivery-row">
+                    <div className="order-section">
+                      <div className="order-section-title">🚚 Delivery Info</div>
+                      <div className="order-detail-row">
+                        <span>📧 Email</span>
+                        <span>{order.customerEmail}</span>
+                      </div>
+                      <div className="order-detail-row">
+                        <span>📞 Phone</span>
+                        <span>{order.customerPhone}</span>
+                      </div>
+                      <div className="order-detail-row">
                         <span>📍 Address</span>
                         <span>{order.deliveryAddress}</span>
                       </div>
-                      <div className="delivery-row">
+                      <div className="order-detail-row">
                         <span>💵 Payment</span>
                         <span>{order.paymentMethod}</span>
                       </div>
                       {order.notes && (
-                        <div className="delivery-row">
+                        <div className="order-detail-row">
                           <span>📝 Notes</span>
                           <span>{order.notes}</span>
                         </div>
@@ -234,23 +294,28 @@ function OrdersPage() {
                     </div>
 
                     {/* Status update */}
-                    <div className="order-actions">
+                    <div className="order-section order-status-section">
                       <div className="order-section-title">
-                        Update Status
+                        Update Order Status
                       </div>
-                      <div className="status-btns">
-                        {['pending','confirmed','delivered','cancelled'].map(s => (
+                      <div className="status-btn-group">
+                        {['pending', 'confirmed', 'delivered', 'cancelled'].map(s => (
                           <button
                             key={s}
-                            className={`status-btn ${order.status === s ? 'active' : ''}`}
+                            disabled={isUpdating}
+                            className={`status-update-btn ${order.status === s ? 'active' : ''}`}
                             style={order.status === s ? {
-                              background: STATUS_CONFIG[s].color,
-                              color: STATUS_CONFIG[s].text,
-                              borderColor: STATUS_CONFIG[s].text
+                              background:   STATUS_CONFIG[s].color,
+                              color:        STATUS_CONFIG[s].text,
+                              borderColor:  STATUS_CONFIG[s].text,
+                              fontWeight:   700
                             } : {}}
                             onClick={() => handleStatus(order._id, s)}
                           >
-                            {STATUS_CONFIG[s].emoji} {STATUS_CONFIG[s].label}
+                            {isUpdating
+                              ? '⏳'
+                              : `${STATUS_CONFIG[s].emoji} ${STATUS_CONFIG[s].label}`
+                            }
                           </button>
                         ))}
                       </div>

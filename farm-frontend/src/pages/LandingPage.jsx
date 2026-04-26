@@ -13,6 +13,7 @@ function LandingPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [loading,     setLoading]     = useState(true);
   const [submitting,  setSubmitting]  = useState(false);
+const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   const [form, setForm] = useState({
     customerName: '', customerEmail: '',
@@ -108,31 +109,22 @@ function LandingPage() {
   return (
     <div className="landing">
 
-      {/* ---- NAVBAR ---- */}
-      <nav className="land-nav">
-        <div className="land-nav-brand">
-          <span className="land-nav-logo">🌾</span>
-          <span className="land-nav-name">Tully Farm</span>
-        </div>
-        <div className="land-nav-right">
-          <button
-            className="land-cart-btn"
-            onClick={() => setShowCart(true)}
-          >
-            🛒
-            {cartCount > 0 && (
-              <span className="cart-badge">{cartCount}</span>
-            )}
-          </button>
-<button
-  className="land-login-btn"
-  onClick={() => navigate('/login')}
->
-  Admin Login
-</button>
-        </div>
-      </nav>
-
+      {/* NAVBAR */}
+<nav className="land-nav">
+  <div className="land-nav-brand">
+    <span className="land-nav-logo">🌾</span>
+    <span className="land-nav-name">Tully Farm</span>
+  </div>
+  <div className="land-nav-right">
+    {/* Customer login in NAVBAR */}
+    <button
+      className="land-login-btn"
+      onClick={() => navigate('/customer/login')}
+    >
+      🛒 Customer Login
+    </button>
+  </div>
+</nav>
       {/* ---- HERO ---- */}
       <section className="hero">
         <div className="hero-content">
@@ -256,28 +248,18 @@ function LandingPage() {
                 <div className="product-emoji">{product.emoji}</div>
                 <h3 className="product-name">{product.name}</h3>
                 <p className="product-desc">{product.description}</p>
-                <div className="product-footer">
-                  <div className="product-price">
-                    ₹{product.pricePerUnit}
-                    <span className="product-unit"> / {product.unit}</span>
-                  </div>
-                  <div className="product-controls">
-                    {cart[product._id] ? (
-                      <div className="qty-control">
-                        <button onClick={() => removeFromCart(product._id)}>−</button>
-                        <span>{cart[product._id].quantity}</span>
-                        <button onClick={() => addToCart(product)}>+</button>
-                      </div>
-                    ) : (
-                      <button
-                        className="add-to-cart-btn"
-                        onClick={() => addToCart(product)}
-                      >
-                        Add to Cart
-                      </button>
-                    )}
-                  </div>
-                </div>
+<div className="product-footer">
+  <div className="product-price">
+    ₹{product.pricePerUnit}
+    <span className="product-unit"> / {product.unit}</span>
+  </div>
+  <button
+    className="add-to-cart-btn"
+    onClick={() => setShowLoginPrompt(true)}
+  >
+    Order Now
+  </button>
+</div>
               </div>
             ))}
           </div>
@@ -349,14 +331,15 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ---- FOOTER ---- */}
-      <footer className="land-footer">
-        <span>🌾 Tully Farm © 2025</span>
-        <span>Pure. Natural. Fresh.</span>
-<button onClick={() => navigate('/login')} className="footer-login">
-  Farm Login
-</button>
-      </footer>
+     {/* FOOTER — Admin login at bottom */}
+<footer className="land-footer">
+  <span>🌾 Tully Farm © 2025</span>
+  <span>Pure. Natural. Fresh.</span>
+  {/* Admin login at footer — not prominent */}
+  <button onClick={() => navigate('/login')} className="footer-login">
+    Farm Admin
+  </button>
+</footer>
 
       {/* ======== CART DRAWER ======== */}
       {showCart && (
@@ -532,7 +515,29 @@ function LandingPage() {
           </div>
         </div>
       )}
-
+{showLoginPrompt && (
+  <div className="drawer-overlay" onClick={() => setShowLoginPrompt(false)}>
+    <div className="land-login-prompt" onClick={e => e.stopPropagation()}>
+      <div style={{ fontSize: 44, marginBottom: 12 }}>🔐</div>
+      <h2>Login Required</h2>
+      <p>Please login or create an account to place an order.</p>
+      <button
+        className="hero-btn-primary"
+        onClick={() => navigate('/customer/login')}
+        style={{ width: '100%', marginBottom: 10 }}
+      >
+        🔑 Customer Login / Register
+      </button>
+      <button
+        className="hero-btn-secondary"
+        onClick={() => setShowLoginPrompt(false)}
+        style={{ width: '100%' }}
+      >
+        Maybe Later
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 }
